@@ -1,0 +1,733 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penilaian Risiko Rantai Pasok - Pulau Jawa</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        riskLow: '#10B981',
+                        riskMedium: '#F59E0B',
+                        riskHigh: '#F97316',
+                        riskCritical: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .shadow-lg, .shadow-md { box-shadow: none !important; }
+            .tab-pane { display: block !important; }
+        }
+        .matrix-cell {
+            transition: all 0.2s ease;
+        }
+        .matrix-cell.active {
+            transform: scale(1.15);
+            box-shadow: 0 0 12px rgba(0,0,0,0.4);
+            z-index: 10;
+            border: 2px solid #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen pb-12">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-truck-fast text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">LogiRisk Jawa</h1>
+                    <p class="text-xs text-slate-400">Sistem Penilaian Risiko & Mitigasi Rantai Pasok Intra-Pulau Jawa</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300 border border-slate-600">
+                    <i class="fa-solid fa-map-location-dot mr-1.5 text-indigo-400"></i> Scope: Pulau Jawa
+                </span>
+                <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-print"></i> Cetak Laporan
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- INPUT FORM PANEL (Left - 5 Cols) -->
+            <section class="lg:col-span-5 bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl no-print flex flex-col justify-between h-fit">
+                <div>
+                    <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-700">
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-indigo-400"></i> Parameter Input Assessments
+                        </h2>
+                        <span class="text-xs bg-indigo-900/50 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-700/50">4 Input + 2 Otomatis</span>
+                    </div>
+
+                    <form id="riskForm" class="space-y-5" onsubmit="event.preventDefault();">
+
+                        <!-- INPUT 1: Asal & Tujuan -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                                <i class="fa-solid fa-route text-indigo-400 mr-1"></i> 1. Rute Kota Asal & Tujuan
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs text-slate-400 mb-1 block">Kota Asal</label>
+                                    <select id="kotaAsal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                        <option value="Jakarta">Jakarta</option>
+                                        <option value="Bogor">Bogor</option>
+                                        <option value="Bandung">Bandung</option>
+                                        <option value="Cirebon">Cirebon</option>
+                                        <option value="Semarang">Semarang</option>
+                                        <option value="Solo">Solo</option>
+                                        <option value="Yogyakarta">Yogyakarta</option>
+                                        <option value="Surabaya" selected>Surabaya</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-400 mb-1 block">Kota Tujuan</label>
+                                    <select id="kotaTujuan" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                        <option value="Jakarta" selected>Jakarta</option>
+                                        <option value="Bandung">Bandung</option>
+                                        <option value="Semarang">Semarang</option>
+                                        <option value="Solo">Solo</option>
+                                        <option value="Yogyakarta">Yogyakarta</option>
+                                        <option value="Surabaya">Surabaya</option>
+                                        <option value="Malang">Malang</option>
+                                        <option value="Banyuwangi">Banyuwangi</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INPUT 2: Kategori Komoditas -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                                <i class="fa-solid fa-box text-indigo-400 mr-1"></i> 2. Jenis / Kategori Komoditas
+                            </label>
+                            <select id="jenisBarang" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="Bahan Makanan Basah">Bahan Makanan Basah / Perishable Goods</option>
+                                <option value="Elektronik & Gadget">Barang Elektronik & Komponen</option>
+                                <option value="Cair & Kimia Industri">Bahan Cair & Kimia Industri</option>
+                                <option value="Pecah Belah">Pecah Belah / Fragile Goods</option>
+                                <option value="Manufaktur Umum" selected>Produk Manufaktur Umum & Tekstil</option>
+                            </select>
+                        </div>
+
+                        <!-- INPUT 3: Moda & Rute Transportasi -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                                <i class="fa-solid fa-road text-indigo-400 mr-1"></i> 3. Moda & Jalur Rute Jawa
+                            </label>
+                            <select id="modaRute" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="Tol Trans-Jawa" selected>Jalan Tol Trans-Jawa (Truk Box/Kontainer)</option>
+                                <option value="Jalur Pantura">Jalur Nasional Pantura (Utara)</option>
+                                <option value="Jalur Selatan Jawa">Jalur Lintas Selatan Jawa (JLS)</option>
+                                <option value="Kereta Logistik Jawa">Kereta Api Logistik (KALOG)</option>
+                            </select>
+                        </div>
+
+                        <!-- INPUT 4: Kondisi Lingkungan/Cuaca -->
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                                <i class="fa-solid fa-cloud-showers-heavy text-indigo-400 mr-1"></i> 4. Potensi Cuaca & Eksternal
+                            </label>
+                            <select id="potensiCuaca" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="Cerah / Normal">Cerah & Kondisi Rute Normal</option>
+                                <option value="Hujan Deras / Rawan Banjir" selected>Hujan Deras & Rawan Banjir Rob/Genangan</option>
+                                <option value="Bencana Longsor">Cuaca Ekstrem / Rawan Longsor Bukit</option>
+                                <option value="Kemacetan High Season">Kemacetan Tinggi (Musim Liburan/Mudik)</option>
+                            </select>
+                        </div>
+
+                        <!-- OUTPUT OTOMATIS: Likelihood & Impact (dihitung dari input 1-4) -->
+                        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 mr-1"></i> Hasil Otomatis dari Input
+                                </span>
+                                <span class="text-[10px] bg-emerald-900/40 text-emerald-300 px-2 py-0.5 rounded border border-emerald-700/50">Auto</span>
+                            </div>
+                            <p id="warnKota" class="hidden text-xs text-amber-400 mb-3">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Kota asal dan tujuan sama, jarak dianggap 0 km.
+                            </p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- LIKELIHOOD -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-xs font-semibold text-slate-300">Likelihood</label>
+                                        <span id="valFrekuensi" class="text-xs font-bold text-indigo-400">3 / 5</span>
+                                    </div>
+                                    <p id="labelFrekuensi" class="text-[10px] text-slate-400 mb-2">Kemungkinan Kejadian</p>
+                                    <div id="meterFrekuensi" class="flex gap-1 mb-2"></div>
+                                    <ul id="faktorFrekuensi" class="text-[10px] text-slate-400 space-y-0.5 list-disc pl-3"></ul>
+                                </div>
+                                <!-- IMPACT -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-xs font-semibold text-slate-300">Impact</label>
+                                        <span id="valDampak" class="text-xs font-bold text-indigo-400">4 / 5</span>
+                                    </div>
+                                    <p id="labelDampak" class="text-[10px] text-slate-400 mb-2">Dampak Kerugian Logistik</p>
+                                    <div id="meterDampak" class="flex gap-1 mb-2"></div>
+                                    <ul id="faktorDampak" class="text-[10px] text-slate-400 space-y-0.5 list-disc pl-3"></ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-700/60 text-xs text-slate-400 text-center">
+                    <i class="fa-solid fa-circle-info mr-1 text-slate-500"></i> Perubahan data akan memperbarui kalkulasi secara langsung.
+                </div>
+            </section>
+
+
+            <!-- OUTPUT DASHBOARD PANEL (Right - 7 Cols) -->
+            <section class="lg:col-span-7 space-y-6">
+
+                <!-- PRINT ONLY HEADER -->
+                <div class="hidden print-only mb-6 border-b pb-4">
+                    <h1 class="text-2xl font-bold text-black">LAPORAN PENILAIAN RISIKO RANTAI PASOK - PULAU JAWA</h1>
+                    <p class="text-sm text-gray-600">Dokumen Resmi Ringkasan Mitigasi & Matriks Risiko Distribusi Intra-Pulau</p>
+                </div>
+
+                <!-- NAVIGATION TABS -->
+                <div class="no-print bg-slate-800 p-1.5 rounded-2xl border border-slate-700 overflow-x-auto">
+                    <div class="flex items-center gap-1 min-w-max">
+                        <button onclick="switchTab('tab-all')" id="nav-tab-all" class="tab-btn active-tab px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow">
+                            <i class="fa-solid fa-border-all"></i> Semua
+                        </button>
+                        <button onclick="switchTab('tab-1')" id="nav-tab-1" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved"></i> Matriks & Level
+                        </button>
+                        <button onclick="switchTab('tab-2')" id="nav-tab-2" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-tags"></i> Kategori Risiko
+                        </button>
+                        <button onclick="switchTab('tab-3')" id="nav-tab-3" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check"></i> Mitigasi
+                        </button>
+                        <button onclick="switchTab('tab-4')" id="nav-tab-4" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-route"></i> Rute Alternatif
+                        </button>
+                        <button onclick="switchTab('tab-5')" id="nav-tab-5" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-history"></i> Estimasi Dampak
+                        </button>
+                        <button onclick="switchTab('tab-6')" id="nav-tab-6" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-lines"></i> Ringkasan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT CONTAINER -->
+                <div class="space-y-6">
+
+                    <!-- TAB 1 & 2 TOP WRAPPER -->
+                    <div id="wrapper-top-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- TAB 1: Matriks & Level Risiko -->
+                        <div id="tab-1" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Penilaian Level Risiko</span>
+                                <span id="badgeWarna" class="px-2.5 py-0.5 rounded-full text-xs font-bold text-white bg-amber-500 uppercase">HIGH</span>
+                            </div>
+                            <div class="flex items-baseline gap-3">
+                                <span id="skorDisplay" class="text-4xl font-extrabold text-white">12</span>
+                                <span class="text-xs text-slate-400">/ 25 Skor Maksimal</span>
+                            </div>
+                            <p id="levelTextDisplay" class="text-sm font-semibold text-amber-400 mt-1">Tinggi (High Risk)</p>
+                            <div class="w-full bg-slate-700 h-2 rounded-full mt-3 overflow-hidden">
+                                <div id="riskProgressBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 48%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Kategori Risiko Utama -->
+                        <div id="tab-2" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Klasifikasi Kategori Risiko</span>
+                            <div class="flex items-center gap-3 mt-1">
+                                <div id="kategoriIconBox" class="p-3 bg-indigo-900/50 border border-indigo-700/50 rounded-xl text-indigo-400 text-xl">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <div>
+                                    <h3 id="kategoriDisplay" class="text-base font-bold text-white leading-snug">Risiko Geografis & Kendala Jalur Trans Jawa</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">Berdasarkan korelasi rute dan jenis barang</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- VISUAL MATRIX 5x5 DISPLAY (Part of Tab 1) -->
+                    <div id="tab-1-matrix" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-indigo-400"></i> Visualisasi Matriks Risiko (5 x 5)
+                            </h3>
+                            <span class="text-xs text-slate-400">Frekuensi (Y) vs Dampak (X)</span>
+                        </div>
+
+                        <!-- 5x5 Grid Container -->
+                        <div class="grid grid-cols-6 gap-1.5 text-center text-[10px] font-semibold">
+                            <!-- Header Row (Impact Label) -->
+                            <div class="p-1 text-slate-500 flex items-center justify-center">F \ D</div>
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded">D1 (S.Kecil)</div>
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded">D2 (Kecil)</div>
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded">D3 (Sedang)</div>
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded">D4 (Besar)</div>
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded">D5 (Fatal)</div>
+
+                            <!-- Rows 5 down to 1 -->
+                            <!-- Row 5 -->
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded flex items-center justify-center">F5 (S.Sering)</div>
+                            <div id="m-5-1" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">5</div>
+                            <div id="m-5-2" class="matrix-cell p-2 rounded bg-amber-600/70 text-white">10</div>
+                            <div id="m-5-3" class="matrix-cell p-2 rounded bg-orange-600/80 text-white">15</div>
+                            <div id="m-5-4" class="matrix-cell p-2 rounded bg-rose-600 text-white">20</div>
+                            <div id="m-5-5" class="matrix-cell p-2 rounded bg-red-700 text-white">25</div>
+
+                            <!-- Row 4 -->
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded flex items-center justify-center">F4 (Sering)</div>
+                            <div id="m-4-1" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">4</div>
+                            <div id="m-4-2" class="matrix-cell p-2 rounded bg-amber-600/70 text-white">8</div>
+                            <div id="m-4-3" class="matrix-cell p-2 rounded bg-orange-600/80 text-white">12</div>
+                            <div id="m-4-4" class="matrix-cell p-2 rounded bg-orange-600/90 text-white">16</div>
+                            <div id="m-4-5" class="matrix-cell p-2 rounded bg-rose-600 text-white">20</div>
+
+                            <!-- Row 3 -->
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded flex items-center justify-center">F3 (Sedang)</div>
+                            <div id="m-3-1" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">3</div>
+                            <div id="m-3-2" class="matrix-cell p-2 rounded bg-emerald-700/70 text-white">6</div>
+                            <div id="m-3-3" class="matrix-cell p-2 rounded bg-amber-600/70 text-white">9</div>
+                            <div id="m-3-4" class="matrix-cell p-2 rounded bg-orange-600/80 text-white">12</div>
+                            <div id="m-3-5" class="matrix-cell p-2 rounded bg-orange-600/90 text-white">15</div>
+
+                            <!-- Row 2 -->
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded flex items-center justify-center">F2 (Jarang)</div>
+                            <div id="m-2-1" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">2</div>
+                            <div id="m-2-2" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">4</div>
+                            <div id="m-2-3" class="matrix-cell p-2 rounded bg-emerald-700/70 text-white">6</div>
+                            <div id="m-2-4" class="matrix-cell p-2 rounded bg-amber-600/70 text-white">8</div>
+                            <div id="m-2-5" class="matrix-cell p-2 rounded bg-amber-600/80 text-white">10</div>
+
+                            <!-- Row 1 -->
+                            <div class="p-1 text-slate-400 bg-slate-900/50 rounded flex items-center justify-center">F1 (S.Jarang)</div>
+                            <div id="m-1-1" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">1</div>
+                            <div id="m-1-2" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">2</div>
+                            <div id="m-1-3" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">3</div>
+                            <div id="m-1-4" class="matrix-cell p-2 rounded bg-emerald-700/60 text-white">4</div>
+                            <div id="m-1-5" class="matrix-cell p-2 rounded bg-emerald-700/70 text-white">5</div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3 & 4 MIDDLE WRAPPER -->
+                    <div id="wrapper-mid-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- TAB 3: Rekomendasi Strategi Mitigasi -->
+                        <div id="tab-3" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-3">
+                                    <i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Rekomendasi Strategi Mitigasi
+                                </span>
+                                <ul id="mitigasiList" class="space-y-2 text-xs text-slate-200">
+                                    <!-- Dynamic List -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: Rekomendasi Rute Alternatif -->
+                        <div id="tab-4" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-3">
+                                    <i class="fa-solid fa-diamond-turn-right text-indigo-400 mr-1"></i> Rute & Moda Alternatif Intra-Jawa
+                                </span>
+                                <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-700">
+                                    <p id="ruteAltDisplay" class="text-xs font-medium text-slate-200 leading-relaxed">
+                                        --
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-700/50 flex items-center gap-2 text-[11px] text-slate-400">
+                                <i class="fa-solid fa-map text-slate-500"></i> Cakupan: Jalur Darat & Kereta Pulau Jawa
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TAB 5 & 6 LOWER WRAPPER -->
+                    <div id="wrapper-low-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- TAB 5: Estimasi Dampak Waktu & Biaya -->
+                        <div id="tab-5" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-3">
+                                <i class="fa-solid fa-clock-history text-amber-400 mr-1"></i> Estimasi Dampak Waktu & Biaya Kerugian
+                            </span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+                                    <span class="text-[10px] text-slate-400 block mb-1">Est. Keterlambatan</span>
+                                    <span id="waktuImpact" class="text-base font-bold text-amber-400">+4 - 8 Jam</span>
+                                </div>
+                                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+                                    <span class="text-[10px] text-slate-400 block mb-1">Pembengkakan Biaya</span>
+                                    <span id="biayaImpact" class="text-base font-bold text-rose-400">+10% Biaya</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 6: Ringkasan Laporan Executive -->
+                        <div id="tab-6" class="tab-pane bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-lg flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                                    <i class="fa-solid fa-file-invoice text-indigo-400 mr-1"></i> Ringkasan Laporan Penilaian
+                                </span>
+                                <div class="text-xs text-slate-300 leading-relaxed space-y-1 bg-slate-900/40 p-3 rounded-xl border border-slate-700/60">
+                                    <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                                        <span id="laporanId">ID: RSK-JAWA-8842</span>
+                                        <span id="laporanTanggal">2026-11-03</span>
+                                    </div>
+                                    <p id="ringkasanTeks" class="italic text-slate-300">
+                                        "Pengiriman dari Surabaya ke Jakarta via Tol Trans-Jawa berisiko Tinggi."
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- JavaScript Logika Risiko & Switching Tab -->
+    <script>
+        // Tab Switcher Logic
+        function switchTab(tabId) {
+            // Reset tab navigation button styling
+            const navButtons = document.querySelectorAll('.tab-btn');
+            navButtons.forEach(btn => {
+                btn.className = "tab-btn px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700/50 transition flex items-center gap-1.5";
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn active-tab px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow";
+            }
+
+            const allPanes = document.querySelectorAll('.tab-pane');
+            const wrappers = [
+                document.getElementById('wrapper-top-cards'),
+                document.getElementById('wrapper-mid-cards'),
+                document.getElementById('wrapper-low-cards')
+            ];
+
+            if (tabId === 'tab-all') {
+                // Show all panes & reset wrappers to grid
+                allPanes.forEach(pane => pane.style.display = 'block');
+                wrappers.forEach(w => {
+                    if (w) w.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+                });
+            } else {
+                // Hide all panes first
+                allPanes.forEach(pane => pane.style.display = 'none');
+                
+                // Show specific pane(s)
+                if (tabId === 'tab-1') {
+                    document.getElementById('tab-1').style.display = 'block';
+                    document.getElementById('tab-1-matrix').style.display = 'block';
+                } else {
+                    const targetPane = document.getElementById(tabId);
+                    if (targetPane) targetPane.style.display = 'block';
+                }
+
+                // Adjust grid layout for active single card
+                wrappers.forEach(w => {
+                    if (w) w.className = "grid grid-cols-1 gap-4";
+                });
+            }
+        }
+
+        // Database Rute Alternatif Pulau Jawa
+        const ruteDB = {
+            "Tol Trans-Jawa": "Apabila tol macet/tergenang, alihkan armada ke Jalur Arteri Pantura (Krawang-Subang-Cirebon) atau manfaatkan kantong parkir rest area KM 208.",
+            "Jalur Pantura": "Dialihkan masuk via Gerbang Tol terdekat ke Jalan Tol Trans-Jawa untuk menghindari rob pasang laut & perbaikan jalan berkala.",
+            "Jalur Selatan Jawa": "Dialihkan melalui Jalur Tengah (Purwokerto - Kebumen - Yogyakarta) untuk menghindari potensi titik longsor kawasan perbukitan.",
+            "Kereta Logistik Jawa": "Gunakan skema intermodal Hub-to-Hub (Truk Lokal ke Stasiun KALOG Jakarta/Surabaya) jika terjadi kendala rel."
+        };
+
+        // DOM Elements Input
+        const kotaAsalEl = document.getElementById('kotaAsal');
+        const kotaTujuanEl = document.getElementById('kotaTujuan');
+        const jenisBarangEl = document.getElementById('jenisBarang');
+        const modaRuteEl = document.getElementById('modaRute');
+        const potensiCuacaEl = document.getElementById('potensiCuaca');
+
+        const valFrekuensiEl = document.getElementById('valFrekuensi');
+        const valDampakEl = document.getElementById('valDampak');
+
+        // DOM Elements Output
+        const skorDisplay = document.getElementById('skorDisplay');
+        const levelTextDisplay = document.getElementById('levelTextDisplay');
+        const badgeWarna = document.getElementById('badgeWarna');
+        const riskProgressBar = document.getElementById('riskProgressBar');
+        
+        const kategoriDisplay = document.getElementById('kategoriDisplay');
+        const kategoriIconBox = document.getElementById('kategoriIconBox');
+        
+        const mitigasiList = document.getElementById('mitigasiList');
+        const ruteAltDisplay = document.getElementById('ruteAltDisplay');
+        
+        const waktuImpact = document.getElementById('waktuImpact');
+        const biayaImpact = document.getElementById('biayaImpact');
+        
+        const laporanId = document.getElementById('laporanId');
+        const laporanTanggal = document.getElementById('laporanTanggal');
+        const ringkasanTeks = document.getElementById('ringkasanTeks');
+
+
+        // ===== Mesin Penilaian Otomatis Likelihood & Impact =====
+        const KOTA_KOORD = {
+            "Jakarta": [-6.2088, 106.8456], "Bogor": [-6.5950, 106.8166], "Bandung": [-6.9175, 107.6191],
+            "Cirebon": [-6.7320, 108.5523], "Semarang": [-6.9667, 110.4167], "Solo": [-7.5755, 110.8243],
+            "Yogyakarta": [-7.7956, 110.3695], "Surabaya": [-7.2575, 112.7521], "Malang": [-7.9666, 112.6326],
+            "Banyuwangi": [-8.2192, 114.3691]
+        };
+
+        // Estimasi jarak darat (km) = jarak garis lurus x 1.3
+        function jarakKm(a, b) {
+            if (a === b || !KOTA_KOORD[a] || !KOTA_KOORD[b]) return 0;
+            const R = 6371, rad = d => d * Math.PI / 180;
+            const [la1, lo1] = KOTA_KOORD[a], [la2, lo2] = KOTA_KOORD[b];
+            const h = Math.sin(rad(la2 - la1) / 2) ** 2 +
+                      Math.cos(rad(la1)) * Math.cos(rad(la2)) * Math.sin(rad(lo2 - lo1) / 2) ** 2;
+            return Math.round(2 * R * Math.asin(Math.sqrt(h)) * 1.3);
+        }
+
+        const clamp15 = n => Math.max(1, Math.min(5, Math.round(n)));
+        const LABEL_FREK = ["", "Sangat Jarang", "Jarang", "Kadang-kadang", "Sering", "Sangat Sering"];
+        const LABEL_DMP = ["", "Sangat Kecil", "Kecil", "Sedang", "Besar", "Fatal"];
+
+        function nilaiOtomatis(asal, tujuan, barang, rute, cuaca) {
+            const km = jarakKm(asal, tujuan);
+            const fF = [], fD = [];
+
+            // ---- LIKELIHOOD: seberapa sering gangguan mungkin terjadi ----
+            let L = 1;
+            let cuacaL = { "Cerah / Normal": 0, "Kemacetan High Season": 2, "Hujan Deras / Rawan Banjir": 2, "Bencana Longsor": 3 }[cuaca] ?? 0;
+            if (rute === "Kereta Logistik Jawa" && cuaca === "Kemacetan High Season") cuacaL = 0; // rel tidak terdampak macet
+            L += cuacaL;
+            if (cuacaL > 0) fF.push(`Kondisi: ${cuaca} (+${cuacaL})`);
+
+            const modaL = { "Tol Trans-Jawa": 0, "Kereta Logistik Jawa": 0, "Jalur Pantura": 1, "Jalur Selatan Jawa": 1 }[rute] ?? 0;
+            L += modaL;
+            if (modaL > 0) fF.push(`Jalur ${rute} lebih rawan gangguan (+${modaL})`);
+
+            const cocok = (rute === "Jalur Pantura" && cuaca.includes("Banjir")) ||
+                          (rute === "Jalur Selatan Jawa" && cuaca.includes("Longsor")) ||
+                          (rute === "Tol Trans-Jawa" && cuaca.includes("Kemacetan"));
+            if (cocok) { L += 1; fF.push("Jalur & kondisi saling memperparah (+1)"); }
+
+            const jarakL = km >= 400 ? 1 : km >= 150 ? 0.5 : 0;
+            L += jarakL;
+            if (jarakL > 0) fF.push(`Jarak ±${km} km, paparan lebih lama (+${jarakL})`);
+            if (!fF.length) fF.push("Kondisi aman, tidak ada faktor pemicu");
+
+            // ---- IMPACT: seberapa besar kerugian jika gangguan terjadi ----
+            let D = { "Manufaktur Umum": 2, "Elektronik & Gadget": 3, "Pecah Belah": 3, "Cair & Kimia Industri": 4, "Bahan Makanan Basah": 4 }[barang] ?? 2;
+            fD.push(`Komoditas ${barang} (dasar ${D})`);
+
+            const cuacaD = { "Cerah / Normal": 0, "Kemacetan High Season": 0.5, "Hujan Deras / Rawan Banjir": 0.5, "Bencana Longsor": 1 }[cuaca] ?? 0;
+            D += cuacaD;
+            if (cuacaD > 0) fD.push(`Keparahan kondisi (+${cuacaD})`);
+
+            const jarakD = km >= 400 ? 1 : km >= 150 ? 0.5 : 0;
+            D += jarakD;
+            if (jarakD > 0) fD.push(`Jarak jauh, kerugian tertunda lebih besar (+${jarakD})`);
+
+            return { frekuensi: clamp15(L), dampak: clamp15(D), km, fF, fD };
+        }
+
+        function renderMeter(el, nilai, warnaAktif) {
+            el.innerHTML = [1, 2, 3, 4, 5].map(i =>
+                `<div class="h-2 flex-1 rounded-full transition-all duration-300 ${i <= nilai ? warnaAktif : 'bg-slate-700'}"></div>`).join('');
+        }
+
+        // Main Calculation Engine
+        function hitungRisiko() {
+            // Read Inputs
+            const asal = kotaAsalEl.value;
+            const tujuan = kotaTujuanEl.value;
+            const barang = jenisBarangEl.value;
+            const rute = modaRuteEl.value;
+            const cuaca = potensiCuacaEl.value;
+
+            // Likelihood & Impact dihitung otomatis dari input
+            const auto = nilaiOtomatis(asal, tujuan, barang, rute, cuaca);
+            const frekuensi = auto.frekuensi;
+            const dampak = auto.dampak;
+
+            valFrekuensiEl.innerText = `${frekuensi} / 5`;
+            valDampakEl.innerText = `${dampak} / 5`;
+            document.getElementById('labelFrekuensi').innerText = `Kemungkinan: ${LABEL_FREK[frekuensi]}`;
+            document.getElementById('labelDampak').innerText = `Dampak: ${LABEL_DMP[dampak]}`;
+            renderMeter(document.getElementById('meterFrekuensi'), frekuensi, 'bg-indigo-500');
+            renderMeter(document.getElementById('meterDampak'), dampak, 'bg-rose-500');
+            document.getElementById('faktorFrekuensi').innerHTML = auto.fF.map(t => `<li>${t}</li>`).join('');
+            document.getElementById('faktorDampak').innerHTML = auto.fD.map(t => `<li>${t}</li>`).join('');
+            document.getElementById('warnKota').classList.toggle('hidden', asal !== tujuan);
+
+            // 1. Skor & Level Risiko
+            const skor = frekuensi * dampak;
+            let level = "";
+            let warnaClass = "";
+            let progressPct = (skor / 25) * 100;
+
+            if (skor <= 4) {
+                level = "Rendah (Low Risk)";
+                warnaClass = "bg-emerald-500";
+            } else if (skor <= 9) {
+                level = "Sedang (Medium Risk)";
+                warnaClass = "bg-amber-500";
+            } else if (skor <= 15) {
+                level = "Tinggi (High Risk)";
+                warnaClass = "bg-orange-500";
+            } else {
+                level = "Kritis (Critical Risk)";
+                warnaClass = "bg-rose-600";
+            }
+
+            // Update UI 1
+            skorDisplay.innerText = skor;
+            levelTextDisplay.innerText = level;
+            badgeWarna.className = `px-2.5 py-0.5 rounded-full text-xs font-bold text-white uppercase ${warnaClass}`;
+            levelTextDisplay.className = `text-sm font-semibold mt-1 ${warnaClass.replace('bg-', 'text-')}`;
+            riskProgressBar.className = `${warnaClass} h-full transition-all duration-300`;
+            riskProgressBar.style.width = `${progressPct}%`;
+
+            // Highlight Active Matrix Cell
+            document.querySelectorAll('.matrix-cell').forEach(cell => cell.classList.remove('active'));
+            const activeCell = document.getElementById(`m-${frekuensi}-${dampak}`);
+            if (activeCell) activeCell.classList.add('active');
+
+            // 2. Kategori Risiko Utama
+            let kategori = "";
+            let iconClass = "fa-triangle-exclamation";
+
+            if (cuaca.includes("Banjir") || cuaca.includes("Longsor")) {
+                kategori = "Risiko Geografis & Rute Trans Jawa";
+                iconClass = "fa-cloud-showers-water";
+            } else if (barang.includes("Makanan") || barang.includes("Cair")) {
+                kategori = "Risiko Kerusakan Kargo & Penanganan Suhu";
+                iconClass = "fa-temperature-low";
+            } else if (cuaca.includes("Kemacetan") || rute.includes("Pantura")) {
+                kategori = "Risiko Keterlambatan Kemacetan Jalan";
+                iconClass = "fa-truck-line";
+            } else {
+                kategori = "Risiko Operasional Distribusi Standard";
+                iconClass = "fa-boxes-packing";
+            }
+
+            kategoriDisplay.innerText = kategori;
+            kategoriIconBox.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+
+            // 3. Strategi Mitigasi
+            let mitigasiArr = [];
+
+            if (barang === "Bahan Makanan Basah") {
+                mitigasiArr.push("Gunakan armada Truk Reeder/Pendingin suhu terkontrol (2-8°C).");
+            } else if (barang === "Pecah Belah") {
+                mitigasiArr.push("Gunakan palletizing kayu berlapis buble-wrap ekstra.");
+            } else {
+                mitigasiArr.push("Pastikan penguncian kontainer & segel standar ekspedisi.");
+            }
+
+            if (skor >= 12) {
+                mitigasiArr.push("Wajib menggunakan asuransi pengiriman kargo penuh.");
+                mitigasiArr.push("Tugaskan 2 pengemudi pengganti untuk fleksibilitas waktu.");
+            } else {
+                mitigasiArr.push("Pemantauan standar posisi armada via GPS real-time.");
+            }
+
+            if (cuaca.includes("Banjir") || cuaca.includes("Longsor")) {
+                mitigasiArr.push("Pantau update lalu lintas Korlantas Polri sebelum keberangkatan.");
+            }
+
+            mitigasiList.innerHTML = mitigasiArr.map(m => `
+                <li class="flex items-start gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5"></i>
+                    <span>${m}</span>
+                </li>
+            `).join('');
+
+            // 4. Rekomendasi Rute Alternatif
+            const altRuteText = ruteDB[rute] || "Gunakan jalan alternatif terdekat sesuai saran posko logistik wilayah.";
+            ruteAltDisplay.innerText = altRuteText;
+
+            // 5. Dampak Waktu & Biaya
+            let delayStr = "0 - 2 Jam";
+            let costStr = "+0% Biaya";
+
+            if (skor >= 16) {
+                delayStr = "+12 - 24 Jam";
+                costStr = "+25% Biaya Tambahan";
+            } else if (skor >= 10) {
+                delayStr = "+4 - 8 Jam";
+                costStr = "+12% Biaya Operasional";
+            } else if (skor >= 5) {
+                delayStr = "+1 - 3 Jam";
+                costStr = "+5% Biaya Tol/BBM";
+            }
+
+            waktuImpact.innerText = delayStr;
+            biayaImpact.innerText = costStr;
+
+            // 6. Ringkasan Laporan
+            const dateStr = new Date().toISOString().split('T')[0];
+            const randomId = Math.floor(1000 + Math.random() * 9000);
+            
+            laporanId.innerText = `ID: RSK-JAWA-${randomId}`;
+            laporanTanggal.innerText = dateStr;
+            ringkasanTeks.innerText = `"Pengiriman ${barang} dari ${asal} menuju ${tujuan} melalui ${rute} terdeteksi memiliki tingkat risiko ${level.toUpperCase()}. Disarankan menerapkan strategi mitigasi & menyiapkan rute cadangan."`;
+        }
+
+        // Event Listeners for Live Calculation
+        const inputs = [kotaAsalEl, kotaTujuanEl, jenisBarangEl, modaRuteEl, potensiCuacaEl];
+        inputs.forEach(input => {
+            input.addEventListener('input', hitungRisiko);
+            input.addEventListener('change', hitungRisiko);
+        });
+
+        // Initialize on Load
+        window.onload = function() {
+            hitungRisiko();
+        };
+    </script>
+</body>
+</html>
